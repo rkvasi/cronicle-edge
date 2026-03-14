@@ -2032,7 +2032,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			'<div class="caption">Hide job from common reporting (for maintenance/debug).</div>' +
 
 			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_concurrent_arg" value="1" ' + (event.concurrent_arg ? 'checked="checked"' : '') + '/><label for="fe_ee_concurrent_arg">Argument Concurrency</label>' +
-			'<div class="caption">Apply concurrency setting to event/argument combination, allowing concurrent job for each distinct argument passed by WF.</div>'
+			'<div class="caption">Apply concurrency setting to event/argument combination, allowing concurrent job for each distinct argument passed by WF.</div>' +
+
+			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_debug" value="1" ' + (event.debug ? 'checked="checked"' : '') + '/><label for="fe_ee_debug">Debug</label>' +
+			'<div class="caption">Ask event plugin to print debug logs if available</div>'
 
 		);
 		html += get_form_table_spacer();
@@ -2167,13 +2170,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// debugging options (avoid emails/webhooks/history), existing events only
 		if (event.id) {
 			let sudo = app.isAdmin() ? '<input type="checkbox" id="fe_ee_debug_sudo" class="debug_options" value="1"><label for="fe_ee_debug_sudo" title="This will ignore plugin UID setting and run the job using main process UID"> Sudo </label><br>' : "";
-			let ttyTitle = "This option let you capture colorized terminal output using /usr/bin/script tool (typically in the box, on alpine install util-linux). Please note - it will supress stdin/stderr sent to/from job and will also hang on interactive prompts"
+			// let ttyTitle = "This option let you capture colorized terminal output using /usr/bin/script tool (typically in the box, on alpine install util-linux). Please note - it will supress stdin/stderr sent to/from job and will also hang on interactive prompts"
 			html += get_form_table_row('Debug Opts', `				
 				  <input type="checkbox" id="fe_ee_debug_chain"  value="1"><label for="fe_ee_debug_chain"> Omit chaining</label><br>
 				  <input type="checkbox" id="fe_ee_debug_notify"  value="1"><label for="fe_ee_debug_notify"> Omit notification </label><br>
-				  <input type="checkbox" id="fe_ee_debug_tty" value="1"><label for="fe_ee_debug_tty" title="${ttyTitle}"> Use terminal emulator</label><br>
-				  ${sudo}
+				 ${sudo}
 				  `);
+			//   <input type="checkbox" id="fe_ee_debug_tty" value="1"><label for="fe_ee_debug_tty" title="${ttyTitle}"> Use terminal emulator</label><br>
 			html += get_form_table_caption("Debugging options. Applies only to manual execution (not stored with event)");
 			html += get_form_table_spacer();
 		} //
@@ -3129,6 +3132,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		// event silent
 		event.silent = $('#fe_ee_silent').is(':checked') ? 1 : 0;
+
+		// event debug
+		event.debug = $('#fe_ee_debug').is(':checked') ? 1 : 0;
 
 		// argument concurrency
 		event.concurrent_arg = $('#fe_ee_concurrent_arg').is(':checked') ? 1 : 0;

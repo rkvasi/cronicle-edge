@@ -313,6 +313,7 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/run-detached.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:ssh2 bin/docker-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/kube-plugin.mjs
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:node-pty bin/terminal-plugin.js
 
 
 # ------------ Bundle Storage Engines ------------------------------ #
@@ -362,11 +363,31 @@ $sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql"))
 
 if($SQL) { $Oracle = $MSSQL = $Mysql = $Pgsql = $true }
 
-$Mysql ? $sqlDrivers.Add("mysql2"): $sqlArgs.Add("--external:mysql2") | Out-Null
-$Pgsql ? $sqlDrivers.AddRange(@("pg", "pg-query-stream")) : $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
-$Oracle ? $sqlDrivers.Add("oracledb@6.5.0") : $sqlArgs.Add("--external:oracledb") | Out-Null
-$MSSQL ? $sqlDrivers.Add("tedious") : $sqlArgs.Add("--external:tedious") | Out-Null
-$Sqlite ? $sqlDrivers.Add("sqlite3") : $sqlArgs.Add("--external:sqlite3") | Out-Null
+if ($Mysql) {
+  $sqlDrivers.Add("mysql2") | Out-Null
+} else {
+  $sqlArgs.Add("--external:mysql2") | Out-Null
+}
+if ($Pgsql) {
+  $sqlDrivers.AddRange(@("pg", "pg-query-stream")) | Out-Null
+} else {
+  $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
+}
+if ($Oracle) {
+  $sqlDrivers.Add("oracledb@6.5.0") | Out-Null
+} else {
+  $sqlArgs.Add("--external:oracledb") | Out-Null
+}
+if ($MSSQL) {
+  $sqlDrivers.Add("tedious") | Out-Null
+} else {
+  $sqlArgs.Add("--external:tedious") | Out-Null
+}
+if ($Sqlite) {
+  $sqlDrivers.Add("sqlite3") | Out-Null
+} else {
+  $sqlArgs.Add("--external:sqlite3") | Out-Null
+}
 
 # bundle SQL engine if at least 1 SQL driver selected
 if($sqlDrivers.Count -gt 0) {
@@ -429,6 +450,12 @@ if(!(Test-Path "package.json")) {
   npm pkg set scripts.start="node bin/cronicle.js --foreground --echo --manager --color"
 }
 if($Lmdb) { npm i "lmdb@2.9.4" --loglevel silent}
+
+if(!(Test-Path node_modules/node-pty)) {
+  Write-Host " Installing @lydell/node-pty as node-pty" 
+  npm i 'node-pty@npm:@lydell/node-pty'
+}
+
 Pop-Location
 
 if($Restart) {
